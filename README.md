@@ -11,7 +11,7 @@ Go to the [releases page](https://github.com/marouni/adr/releases) and grab one 
 
 Alternatively, if you have a Go development environment setup you can install it directly using :
 ```bash
-go install github.com/mad01/adr
+go install github.com/mad01/adr@latest
 ```
 
 

@@ -3,15 +3,15 @@
 # ADR Go
 A minimalist command line tool written in Go to work with [Architecture Decision Records](http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions) (ADRs).
 
-Greatly inspired by the [adr-tools](https://github.com/npryce/adr-tools) with all of the added benefits of using the Go instead of Bash.
+Greatly inspired by the [adr-tools](https://github.com/npryce/adr-tools) with all the added benefits of using the Go instead of Bash.
 
 # Quick start
 ## Installing adr
 Go to the [releases page](https://github.com/marouni/adr/releases) and grab one of the binaries that corresponds to your platform.
 
-Alternatively, if you have a Go developement environment setup you can install it directly using :
+Alternatively, if you have a Go development environment setup you can install it directly using :
 ```bash
-go get github.com/marouni/adr && go install github.com/marouni/adr
+go install github.com/mad01/adr
 ```
 
 

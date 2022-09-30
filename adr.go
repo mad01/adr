@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -20,8 +20,8 @@ type AdrConfig struct {
 	CurrentAdr int    `json:"current_id"`
 }
 
-// Adr basic structure
-type Adr struct {
+// AdrEntry basic structure
+type AdrEntry struct {
 	Number int
 	Title  string
 	Date   string
@@ -39,36 +39,63 @@ const (
 	SUPERSEDED AdrStatus = "Superseded"
 )
 
-var usr, err = user.Current()
-var adrConfigFolderName = ".adr"
-var adrConfigFileName = "config.json"
-var adrConfigTemplateName = "template.md"
-var adrConfigFolderPath = filepath.Join(usr.HomeDir, adrConfigFolderName)
-var adrConfigFilePath = filepath.Join(adrConfigFolderPath, adrConfigFileName)
-var adrTemplateFilePath = filepath.Join(adrConfigFolderPath, adrConfigTemplateName)
-var adrDefaultBaseFolder = filepath.Join(usr.HomeDir, "adr")
+const (
+	adrConfigFolderName   = ".adr"
+	adrConfigFileName     = "config.json"
+	adrConfigTemplateName = "template.md"
+)
 
-func initBaseDir(baseDir string) {
-	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
-		os.Mkdir(baseDir, 0744)
-	} else {
-		color.Red(baseDir + " already exists, skipping folder creation")
-	}
+type AdrHelper struct {
+	baseDir string
 }
 
-func initConfig(baseDir string) {
-	if _, err := os.Stat(adrConfigFolderPath); os.IsNotExist(err) {
-		os.Mkdir(adrConfigFolderPath, 0744)
+func NewAdrHelper() *AdrHelper {
+	return &AdrHelper{}
+}
+
+func (a *AdrHelper) getAdrTemplateFilePath() string {
+	return filepath.Join(a.baseDir, adrConfigTemplateName)
+}
+
+func (a *AdrHelper) getAdrConfigFilePath() string {
+	return filepath.Join(a.baseDir, adrConfigFileName)
+}
+
+func (a *AdrHelper) InitBaseDir(initDir string) error {
+	if initDir == "" {
+		path, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		a.baseDir = fmt.Sprintf("%s/architecture-decision-record", path)
 	}
-	config := AdrConfig{baseDir, 0}
+
+	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
+		os.Mkdir(a.baseDir, 0744)
+	} else {
+		color.Red(a.baseDir + " already exists, skipping folder creation")
+	}
+	return nil
+}
+
+func (a *AdrHelper) InitConfig() error {
+	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
+		color.Red(a.baseDir + " did not exists, please call init")
+	}
+	config := AdrConfig{a.baseDir, 0}
 	bytes, err := json.MarshalIndent(config, "", " ")
 	if err != nil {
 		panic(err)
 	}
-	ioutil.WriteFile(adrConfigFilePath, bytes, 0644)
+	err = ioutil.WriteFile(a.getAdrConfigFilePath(), bytes, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func initTemplate() {
+func (a *AdrHelper) InitTemplate() error {
 	body := []byte(`
 # {{.Title}}
 
@@ -83,21 +110,29 @@ func initTemplate() {
 
 `)
 
-	ioutil.WriteFile(adrTemplateFilePath, body, 0644)
+	err := ioutil.WriteFile(a.getAdrTemplateFilePath(), body, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func updateConfig(config AdrConfig) {
+func (a *AdrHelper) UpdateConfig(config AdrConfig) error {
 	bytes, err := json.MarshalIndent(config, "", " ")
 	if err != nil {
 		panic(err)
 	}
-	ioutil.WriteFile(adrConfigFilePath, bytes, 0644)
+	err = ioutil.WriteFile(a.getAdrConfigFilePath(), bytes, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func getConfig() AdrConfig {
+func (a *AdrHelper) GetConfig() AdrConfig {
 	var currentConfig AdrConfig
 
-	bytes, err := ioutil.ReadFile(adrConfigFilePath)
+	bytes, err := ioutil.ReadFile(a.getAdrConfigFilePath())
 	if err != nil {
 		color.Red("No ADR configuration is found!")
 		color.HiGreen("Start by initializing ADR configuration, check 'adr init --help' for more help")
@@ -108,14 +143,14 @@ func getConfig() AdrConfig {
 	return currentConfig
 }
 
-func newAdr(config AdrConfig, adrName []string) {
-	adr := Adr{
+func (a *AdrHelper) NewAdr(config AdrConfig, adrName []string) {
+	adr := AdrEntry{
 		Title:  strings.Join(adrName, " "),
 		Date:   time.Now().Format("02-01-2006 15:04:05"),
 		Number: config.CurrentAdr,
 		Status: PROPOSED,
 	}
-	template, err := template.ParseFiles(adrTemplateFilePath)
+	template, err := template.ParseFiles(a.getAdrTemplateFilePath())
 	if err != nil {
 		panic(err)
 	}

@@ -7,6 +7,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+func setFlags(app *cli.App) {
+	app.Flags = []cli.Flag{}
+}
+
 func main() {
 
 	app := cli.NewApp()

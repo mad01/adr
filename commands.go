@@ -13,10 +13,11 @@ func setCommands(app *cli.App) {
 			Usage:   "Create a new ADR",
 			Flags:   []cli.Flag{},
 			Action: func(c *cli.Context) error {
-				currentConfig := getConfig()
+				helper := NewAdrHelper()
+				currentConfig := helper.GetConfig()
 				currentConfig.CurrentAdr++
-				updateConfig(currentConfig)
-				newAdr(currentConfig, c.Args())
+				helper.UpdateConfig(currentConfig)
+				helper.NewAdr(currentConfig, c.Args())
 				return nil
 			},
 		},
@@ -29,13 +30,11 @@ func setCommands(app *cli.App) {
 			Description: "Initializes the ADR configuration with an optional ADR base directory\n This is a a prerequisite to running any other adr sub-command",
 			Action: func(c *cli.Context) error {
 				initDir := c.Args().First()
-				if initDir == "" {
-					initDir = adrDefaultBaseFolder
-				}
 				color.Green("Initializing ADR base at " + initDir)
-				initBaseDir(initDir)
-				initConfig(initDir)
-				initTemplate()
+				helper := NewAdrHelper()
+				helper.InitBaseDir(initDir)
+				helper.InitConfig()
+				helper.InitTemplate()
 				return nil
 			},
 		},

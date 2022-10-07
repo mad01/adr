@@ -36,7 +36,7 @@ func testHelperBaseDir() string {
 func TestAdrHelper_GetConfig(t *testing.T) {
 	tempDir := testHelperBaseDir()
 
-	helper := NewAdrHelper(tempDir)
+	helper := NewAdrHelper(tempDir, "")
 	assert.Nil(t, helper.InitBaseDir(tempDir))
 	assert.Nil(t, helper.InitConfig())
 	currentConfig := helper.GetConfig()
@@ -55,8 +55,23 @@ func TestAdrHelper_InitBaseDir(t *testing.T) {
 		}
 	*/
 
-	helper := NewAdrHelper("")
+	helper := NewAdrHelper("", "")
 	err := helper.InitBaseDir("")
 	assert.Nil(t, err)
+
+}
+
+func TestAdrHelper_NewAdr(t *testing.T) {
+	tempDir := testHelperBaseDir()
+
+	helper := NewAdrHelper(tempDir, "README.md")
+	assert.Nil(t, helper.InitBaseDir(tempDir))
+	assert.Nil(t, helper.InitConfig())
+	assert.Nil(t, helper.InitTemplate())
+	currentConfig := helper.GetConfig()
+	assert.NotNil(t, currentConfig)
+
+	currentConfig.CurrentAdr++
+	helper.NewAdr(currentConfig, "some name")
 
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 type AdrConfig struct {
 	BaseDir    string `json:"base_directory"`
 	CurrentAdr int    `json:"current_id"`
+	ReadmeName string `json:"readme_name"`
 }
 
 // AdrEntry basic structure
@@ -40,18 +42,19 @@ const (
 )
 
 const (
-	adrConfigFolderName   = ".adr"
 	adrConfigFileName     = "config.json"
 	adrConfigTemplateName = "template.md"
 	adrDefaultBaseDirName = "architecture-decision-records"
+	adrDefaultReadmeName  = "Readme.md"
 )
 
 type AdrHelper struct {
-	baseDir string
+	baseDir    string
+	readmeName string
 }
 
-func NewAdrHelper(baseDir string) *AdrHelper {
-	helper := &AdrHelper{}
+func NewAdrHelper(baseDir, readmeName string) *AdrHelper {
+	helper := &AdrHelper{readmeName: readmeName}
 	helper.SetBaseDir(baseDir)
 	return helper
 }
@@ -62,11 +65,6 @@ func (a *AdrHelper) getAdrTemplateFilePath() string {
 
 func (a *AdrHelper) getAdrConfigFilePath() string {
 	return filepath.Join(a.baseDir, adrConfigFileName)
-}
-
-func (a *AdrHelper) SetBaseDir(dir string) {
-	basedir := a.getBaseDir(dir)
-	a.baseDir = basedir
 }
 
 func (a *AdrHelper) getBaseDir(initDir string) string {
@@ -82,6 +80,11 @@ func (a *AdrHelper) getBaseDir(initDir string) string {
 
 }
 
+func (a *AdrHelper) SetBaseDir(dir string) {
+	basedir := a.getBaseDir(dir)
+	a.baseDir = basedir
+}
+
 func (a *AdrHelper) InitBaseDir(initDir string) error {
 	a.baseDir = a.getBaseDir(initDir)
 	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
@@ -89,6 +92,8 @@ func (a *AdrHelper) InitBaseDir(initDir string) error {
 	} else {
 		color.Red(a.baseDir + " already exists, skipping folder creation")
 	}
+
+	a.SetAdrBlockInReadme(a.readmeName)
 	return nil
 }
 
@@ -96,7 +101,7 @@ func (a *AdrHelper) InitConfig() error {
 	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
 		color.Red(a.baseDir + " did not exists, please call init")
 	}
-	config := AdrConfig{a.baseDir, 0}
+	config := AdrConfig{BaseDir: a.baseDir, ReadmeName: a.readmeName, CurrentAdr: 0}
 	bytes, err := json.MarshalIndent(config, "", " ")
 	if err != nil {
 		panic(err)
@@ -165,7 +170,9 @@ func (a *AdrHelper) NewAdr(config AdrConfig, adrName string) {
 		Number: config.CurrentAdr,
 		Status: PROPOSED,
 	}
-	template, err := template.ParseFiles(a.getAdrTemplateFilePath())
+	templateFilePath := a.getAdrTemplateFilePath()
+	template, err := template.ParseFiles(templateFilePath)
+
 	if err != nil {
 		panic(err)
 	}
@@ -177,5 +184,36 @@ func (a *AdrHelper) NewAdr(config AdrConfig, adrName string) {
 	}
 	template.Execute(f, adr)
 	f.Close()
+
+	a.AppendRecordIndexToReadme(config.ReadmeName, adrFullPath, adr)
 	color.Green("ADR number " + strconv.Itoa(adr.Number) + " was successfully written to : " + adrFullPath)
+
+}
+
+func (a *AdrHelper) SetAdrBlockInReadme(filename string) {
+	text := fmt.Sprintf("\n##ADR index\n")
+	a.AppendTextToEndOfFile(filename, text)
+
+}
+
+func (a *AdrHelper) AppendRecordIndexToReadme(ReadmeFilename, RecordFilename string, recordEntry AdrEntry) {
+	text := fmt.Sprintf("* [%s](%s)\n", recordEntry.Title, RecordFilename)
+	a.AppendTextToEndOfFile(ReadmeFilename, text)
+}
+
+func (a *AdrHelper) AppendTextToEndOfFile(filename, text string) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		color.Red(filename + " did not exists")
+	}
+
+	//Append second line
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer file.Close()
+	if _, err := file.WriteString(text); err != nil {
+		log.Fatal(err)
+	}
+
 }

@@ -9,14 +9,13 @@ import (
 )
 
 func cmdExecInit() *cobra.Command {
-	var directory string
+	var directory, readme string
 	var command = &cobra.Command{
 		Use:   "init",
 		Short: "Initializes the ADR configurations",
 		Long:  "Initializes the ADR configuration with an optional ADR base directory\n This is a a prerequisite to running any other adr sub-command",
 		Run: func(cmd *cobra.Command, args []string) {
-			color.Green("Initializing ADR base at " + directory)
-			helper := NewAdrHelper(directory)
+			helper := NewAdrHelper(directory, readme)
 
 			if err := helper.InitBaseDir(directory); err != nil {
 				msg := fmt.Sprintf("ops failed to init dir: %s\n", err)
@@ -36,15 +35,13 @@ func cmdExecInit() *cobra.Command {
 				return
 			}
 
+			color.Green("Initializing ADR base at " + helper.baseDir)
 			return
 
 		},
 	}
-	command.Flags().StringVarP(
-		&directory,
-		"directory", "d", "",
-		"adr directory path")
-
+	command.Flags().StringVarP(&directory, "directory", "d", "", "adr directory path")
+	command.Flags().StringVarP(&readme, "readme", "r", adrDefaultReadmeName, "Readme.md to append index of new records to")
 	return command
 }
 
@@ -55,8 +52,7 @@ func cmdExecNew() *cobra.Command {
 		Short: "Create a new ADR",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			color.Green("Initializing ADR base at " + directory)
-			helper := NewAdrHelper(directory)
+			helper := NewAdrHelper(directory, "")
 
 			currentConfig := helper.GetConfig()
 			currentConfig.CurrentAdr++

@@ -49,8 +49,8 @@ type AdrHelper struct {
 	baseDir string
 }
 
-func NewAdrHelper() *AdrHelper {
-	return &AdrHelper{}
+func NewAdrHelper(baseDir string) *AdrHelper {
+	return &AdrHelper{baseDir: baseDir}
 }
 
 func (a *AdrHelper) getAdrTemplateFilePath() string {
@@ -68,6 +68,8 @@ func (a *AdrHelper) InitBaseDir(initDir string) error {
 			return err
 		}
 		a.baseDir = fmt.Sprintf("%s/architecture-decision-record", path)
+	} else {
+		a.baseDir = initDir
 	}
 
 	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
@@ -132,7 +134,8 @@ func (a *AdrHelper) UpdateConfig(config AdrConfig) error {
 func (a *AdrHelper) GetConfig() AdrConfig {
 	var currentConfig AdrConfig
 
-	bytes, err := ioutil.ReadFile(a.getAdrConfigFilePath())
+	configPath := a.getAdrConfigFilePath()
+	bytes, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		color.Red("No ADR configuration is found!")
 		color.HiGreen("Start by initializing ADR configuration, check 'adr init --help' for more help")
@@ -143,9 +146,9 @@ func (a *AdrHelper) GetConfig() AdrConfig {
 	return currentConfig
 }
 
-func (a *AdrHelper) NewAdr(config AdrConfig, adrName []string) {
+func (a *AdrHelper) NewAdr(config AdrConfig, adrName string) {
 	adr := AdrEntry{
-		Title:  strings.Join(adrName, " "),
+		Title:  adrName,
 		Date:   time.Now().Format("02-01-2006 15:04:05"),
 		Number: config.CurrentAdr,
 		Status: PROPOSED,

@@ -68,7 +68,7 @@ func cmdExecNew() *cobra.Command {
 
 		},
 	}
-	command.Flags().StringVarP(&directory, "directory", "d", "", "adr directory path")
+	command.Flags().StringVarP(&directory, "directory", "d", adrDefaultBaseDirName, "adr directory path")
 	command.Flags().StringVarP(&title, "title", "t", "", "adr title")
 	return command
 }

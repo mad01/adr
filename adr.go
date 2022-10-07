@@ -43,6 +43,7 @@ const (
 	adrConfigFolderName   = ".adr"
 	adrConfigFileName     = "config.json"
 	adrConfigTemplateName = "template.md"
+	adrDefaultBaseDirName = "architecture-decision-records"
 )
 
 type AdrHelper struct {
@@ -50,7 +51,9 @@ type AdrHelper struct {
 }
 
 func NewAdrHelper(baseDir string) *AdrHelper {
-	return &AdrHelper{baseDir: baseDir}
+	helper := &AdrHelper{}
+	helper.SetBaseDir(baseDir)
+	return helper
 }
 
 func (a *AdrHelper) getAdrTemplateFilePath() string {
@@ -61,17 +64,26 @@ func (a *AdrHelper) getAdrConfigFilePath() string {
 	return filepath.Join(a.baseDir, adrConfigFileName)
 }
 
-func (a *AdrHelper) InitBaseDir(initDir string) error {
+func (a *AdrHelper) SetBaseDir(dir string) {
+	basedir := a.getBaseDir(dir)
+	a.baseDir = basedir
+}
+
+func (a *AdrHelper) getBaseDir(initDir string) string {
 	if initDir == "" {
 		path, err := os.Getwd()
 		if err != nil {
-			return err
+			color.Red("ops failed to get base dir got err: " + err.Error())
+			os.Exit(1)
 		}
-		a.baseDir = fmt.Sprintf("%s/architecture-decision-record", path)
-	} else {
-		a.baseDir = initDir
+		return fmt.Sprintf("%s/%s", path, adrDefaultBaseDirName)
 	}
+	return initDir
 
+}
+
+func (a *AdrHelper) InitBaseDir(initDir string) error {
+	a.baseDir = a.getBaseDir(initDir)
 	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
 		os.Mkdir(a.baseDir, 0744)
 	} else {

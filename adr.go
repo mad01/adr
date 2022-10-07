@@ -185,8 +185,9 @@ func (a *AdrHelper) NewAdr(config AdrConfig, adrName string) {
 	template.Execute(f, adr)
 	f.Close()
 
-	a.AppendRecordIndexToReadme(config.ReadmeName, adrFullPath, adr)
-	color.Green("ADR number " + strconv.Itoa(adr.Number) + " was successfully written to : " + adrFullPath)
+	adrPathForReadme := fmt.Sprintf("%s/%s", a.baseDir, adrFileName)
+	a.AppendRecordIndexToReadme(config.ReadmeName, adrPathForReadme, adr)
+	color.Green("ADR number " + strconv.Itoa(adr.Number) + " was successfully written to : " + adrPathForReadme)
 
 }
 

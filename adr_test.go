@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"testing"
@@ -12,7 +14,7 @@ import (
 
 const testBaseDir = "just-a-test-dir"
 
-func testHelperBaseDir() string {
+func testHelperBaseDir() (string, string) {
 	randString := func() string {
 		rand.Seed(time.Now().Unix())
 		charset := "abcdefghijklmnopqrstuvwxyz"
@@ -30,13 +32,22 @@ func testHelperBaseDir() string {
 
 	tempDir := fmt.Sprintf("%s/%s", testBaseDir, randString())
 	os.MkdirAll(tempDir, 0744)
-	return tempDir
+
+	readmeName := "readme.md"
+	createReadme := func(testDir, readmeName string) {
+		err := ioutil.WriteFile(fmt.Sprintf("%s/%s", tempDir, readmeName), []byte("#Just a readme test\n"), 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	createReadme(tempDir, readmeName)
+
+	return tempDir, readmeName
 }
 
 func TestAdrHelper_GetConfig(t *testing.T) {
-	tempDir := testHelperBaseDir()
-
-	helper := NewAdrHelper(tempDir, "")
+	tempDir, readmeName := testHelperBaseDir()
+	helper := NewAdrHelper(tempDir, readmeName)
 	assert.Nil(t, helper.InitBaseDir(tempDir))
 	assert.Nil(t, helper.InitConfig())
 	currentConfig := helper.GetConfig()
@@ -55,16 +66,17 @@ func TestAdrHelper_InitBaseDir(t *testing.T) {
 		}
 	*/
 
-	helper := NewAdrHelper("", "")
+	tempDir, readmeName := testHelperBaseDir()
+	helper := NewAdrHelper(tempDir, readmeName)
 	err := helper.InitBaseDir("")
 	assert.Nil(t, err)
 
 }
 
 func TestAdrHelper_NewAdr(t *testing.T) {
-	tempDir := testHelperBaseDir()
+	tempDir, readme := testHelperBaseDir()
 
-	helper := NewAdrHelper(tempDir, "README.md")
+	helper := NewAdrHelper(tempDir, readme)
 	assert.Nil(t, helper.InitBaseDir(tempDir))
 	assert.Nil(t, helper.InitConfig())
 	assert.Nil(t, helper.InitTemplate())

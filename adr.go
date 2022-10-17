@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -67,27 +66,13 @@ func (a *AdrHelper) getAdrConfigFilePath() string {
 	return filepath.Join(a.baseDir, adrConfigFileName)
 }
 
-func (a *AdrHelper) getBaseDir(initDir string) string {
-	if initDir == "" {
-		path, err := os.Getwd()
-		if err != nil {
-			color.Red("ops failed to get base dir got err: " + err.Error())
-			os.Exit(1)
-		}
-		return fmt.Sprintf("%s/%s", path, adrDefaultBaseDirName)
-	}
-	return initDir
-
-}
-
 func (a *AdrHelper) SetBaseDir(dir string) {
-	basedir := a.getBaseDir(dir)
-	a.baseDir = basedir
+	a.baseDir = dir
 }
 
 func (a *AdrHelper) InitBaseDir(initDir string) error {
-	a.baseDir = a.getBaseDir(initDir)
-	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
+	a.SetBaseDir(initDir)
+	if _, err := os.Stat(a.baseDir); errorIsNotExist(fmt.Sprintf("failed to find basedir: %s", a.baseDir), err) {
 		os.Mkdir(a.baseDir, 0744)
 	} else {
 		color.Red(a.baseDir + " already exists, skipping folder creation")
@@ -98,16 +83,18 @@ func (a *AdrHelper) InitBaseDir(initDir string) error {
 }
 
 func (a *AdrHelper) InitConfig() error {
-	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
+	if _, err := os.Stat(a.baseDir); errorIsNotExist(fmt.Sprintf("failed to find basedir: %s", a.baseDir), err) {
 		color.Red(a.baseDir + " did not exists, please call init")
 	}
 	config := AdrConfig{BaseDir: a.baseDir, ReadmeName: a.readmeName, CurrentAdr: 0}
 	bytes, err := json.MarshalIndent(config, "", " ")
 	if err != nil {
+		errorPrintln("InitConfig: ops failed to Marshal file", err)
 		panic(err)
 	}
 	err = ioutil.WriteFile(a.getAdrConfigFilePath(), bytes, 0644)
 	if err != nil {
+		errorPrintln("InitConfig: ops failed to write to file", err)
 		return err
 	}
 
@@ -131,6 +118,7 @@ func (a *AdrHelper) InitTemplate() error {
 
 	err := ioutil.WriteFile(a.getAdrTemplateFilePath(), body, 0644)
 	if err != nil {
+		errorPrintln("InitTemplate: ops failed to ", err)
 		return err
 	}
 	return nil
@@ -143,6 +131,7 @@ func (a *AdrHelper) UpdateConfig(config AdrConfig) error {
 	}
 	err = ioutil.WriteFile(a.getAdrConfigFilePath(), bytes, 0644)
 	if err != nil {
+		errorPrintln("UpdateConfig failed to update config", err)
 		return err
 	}
 	return nil
@@ -171,18 +160,20 @@ func (a *AdrHelper) NewAdr(config AdrConfig, adrName string) {
 		Status: PROPOSED,
 	}
 	templateFilePath := a.getAdrTemplateFilePath()
-	template, err := template.ParseFiles(templateFilePath)
+	templateFile, err := template.ParseFiles(templateFilePath)
 
 	if err != nil {
-		panic(err)
+		errorPrintln("NewAdr: failed to parse template will exit 1", err)
+		os.Exit(1)
 	}
 	adrFileName := strconv.Itoa(adr.Number) + "-" + strings.Join(strings.Split(strings.Trim(adr.Title, "\n \t"), " "), "-") + ".md"
 	adrFullPath := filepath.Join(config.BaseDir, adrFileName)
 	f, err := os.Create(adrFullPath)
 	if err != nil {
-		panic(err)
+		errorPrintln(fmt.Sprintf("NewAdr: failed to create file will exit 1: %s", adrFullPath), err)
+		os.Exit(1)
 	}
-	template.Execute(f, adr)
+	templateFile.Execute(f, adr)
 	f.Close()
 
 	adrPathForReadme := fmt.Sprintf("%s/%s", a.baseDir, adrFileName)
@@ -203,18 +194,19 @@ func (a *AdrHelper) AppendRecordIndexToReadme(ReadmeFilename, RecordFilename str
 }
 
 func (a *AdrHelper) AppendTextToEndOfFile(filename, text string) {
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
+	if _, err := os.Stat(filename); errorIsNotExist(fmt.Sprintf("AppendTextToEndOfFile: failed to find file: %s", filename), err) {
 		color.Red(filename + " did not exists")
 	}
 
 	//Append second line
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Println(err)
+		errorPrintln(fmt.Sprintf("AppendTextToEndOfFile: failed to open file: %s", filename), err)
 	}
 	defer file.Close()
 	if _, err := file.WriteString(text); err != nil {
-		log.Fatal(err)
+		errorPrintln("AppendTextToEndOfFile: failed ot write to file, will exit 1", err)
+		os.Exit(1)
 	}
 
 }

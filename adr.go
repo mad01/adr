@@ -71,8 +71,7 @@ func (a *AdrHelper) SetBaseDir(dir string) {
 }
 
 func (a *AdrHelper) InitBaseDir(initDir string) error {
-	a.SetBaseDir(initDir)
-	if _, err := os.Stat(a.baseDir); errorIsNotExist(fmt.Sprintf("failed to find basedir: %s", a.baseDir), err) {
+	if _, err := os.Stat(a.baseDir); os.IsNotExist(err) {
 		os.Mkdir(a.baseDir, 0744)
 	} else {
 		color.Red(a.baseDir + " already exists, skipping folder creation")

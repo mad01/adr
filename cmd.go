@@ -40,7 +40,7 @@ func cmdExecInit() *cobra.Command {
 
 		},
 	}
-	command.Flags().StringVarP(&directory, "directory", "d", "", "adr directory path")
+	command.Flags().StringVarP(&directory, "directory", "d", adrDefaultBaseDirName, "adr directory path")
 	command.Flags().StringVarP(&readme, "readme", "r", adrDefaultReadmeName, "Readme.md to append index of new records to")
 	return command
 }

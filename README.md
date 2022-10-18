@@ -16,17 +16,15 @@ go install github.com/mad01/adr@latest
 
 
 ## Initializing adr
-Before creating any new ADR you need to choose a folder that will host your ADRs and use the `init` sub-command to initialize the configuration :
-
 ```bash
-adr init /home/user/my_adrs
+adr init --readme README.md
 ```
 
 ## Creating a new ADR
 
 As simple as :
 ```bash
-adr new my awesome proposition
+adr new --title "google managed prometheus"
 ```
 this will create a new numbered ADR in your ADR folder :
 `xxx-my-new-awesome-proposition.md`.

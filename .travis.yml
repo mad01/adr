@@ -11,7 +11,7 @@ env:
 # You don't need to test on very old versions of the Go compiler. It's the user's
 # responsibility to keep their compiler up to date.
 go:
-  - 1.12.4
+  - 1.19.2
 
 # Only clone the most recent commit.
 git:
@@ -25,12 +25,6 @@ git:
 notifications:
   email: false
 
-# Anything in before_script that returns a nonzero exit code will flunk the
-# build and immediately stop. It's sorta like having set -e enabled in bash.
-# Make sure golangci-lint is vendored.
-before_script:
-  - go get github.com/urfave/cli
-  - go get github.com/fatih/color
 
 # script always runs to completion (set +e). If we have linter issues AND a
 # failing test, we want to see both. Configure golangci-lint with a
@@ -38,6 +32,6 @@ before_script:
 script:
   - go clean ./
   - go build ./
-  - ./adr init /tmp
-  - ./adr new test 0 0 1
-  - cat /tmp/1-test-0-0-1.md
+  - ./adr init 
+  - ./adr new --title "test 0 0 1"
+  - cat architecture-decision-records/1-test-0-0-1.md

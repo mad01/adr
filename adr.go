@@ -182,7 +182,7 @@ func (a *AdrHelper) NewAdr(config AdrConfig, adrName string) {
 }
 
 func (a *AdrHelper) SetAdrBlockInReadme(filename string) {
-	text := fmt.Sprintf("\n##ADR index\n")
+	text := fmt.Sprintf("\n## ADR index\n")
 	a.AppendTextToEndOfFile(filename, text)
 
 }
